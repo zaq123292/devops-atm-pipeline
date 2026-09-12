@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<h1>转账</h1><form method="post"><label>目标卡号<input name="target" required></label><label>金额（元，100 的倍数）<input name="amount" type="number" min="100" step="100" required></label><button>确认转账</button></form>{% endblock %}

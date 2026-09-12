@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<h1>{{ session.name }}，您好</h1><h2>余额：¥{{ '%.2f'|format(balance / 100) }}</h2><p><a class="button" href="/withdraw">取款</a><a class="button" href="/deposit">存款</a><a class="button" href="/transfer">转账</a></p>{% endblock %}
