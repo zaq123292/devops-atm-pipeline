@@ -9,7 +9,6 @@ try:
 except ImportError:
     PrometheusMetrics = None
 
-
 def _is_postgres(database_url):
     return isinstance(database_url, str) and database_url.startswith("postgresql")
 
@@ -89,7 +88,17 @@ def create_app(test_config=None):
             connection.commit()
 
     with app.app_context():
-        init_db()
+        for attempt in range(1, 6):
+            try:
+                init_db()
+                app.logger.info("数据库初始化成功")
+                break
+            except Exception as e:
+                app.logger.error("数据库初始化失败（第 %d/5 次尝试）: %s", attempt, e)
+                g.pop("db", None)
+                if attempt == 5:
+                    raise
+                time.sleep(3)
 
     def user():
         return session.get("card")
