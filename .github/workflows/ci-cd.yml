@@ -1,0 +1,127 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # ========== 阶段一：CI 测试 ==========
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pytest with coverage
+        run: pytest tests/ --cov=. --cov-report=xml --cov-report=term-missing
+
+      - name: Run flake8 lint
+        run: flake8 app.py config.py --max-line-length=120 --ignore=E226,E302,E305,E306,E401,E501,E701,E702,E704
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  # ========== 阶段二：Docker 镜像构建 ==========
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG=$(git rev-parse --short HEAD)
+          echo "构建镜像: devops-atm:${IMAGE_TAG}"
+          docker build -t devops-atm:${IMAGE_TAG} -t devops-atm:latest .
+          echo "镜像构建成功"
+          docker images devops-atm
+
+  # ========== 阶段三：CD 自动部署（生产环境）==========
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Configure environment
+        run: |
+          echo "DB_PASSWORD=ci_deploy_password" > .env
+          echo "SECRET_KEY=ci-secret-key" >> .env
+          echo "IMAGE_TAG=latest" >> .env
+          echo "环境配置完成"
+
+      - name: Deploy services
+        run: |
+          echo "=========================================="
+          echo "  CD 自动部署 - 启动生产服务"
+          echo "=========================================="
+          docker-compose up -d --build
+          echo ""
+          echo "服务启动完成，等待健康检查..."
+
+      - name: Wait for health check
+        run: |
+          echo "等待服务就绪（最多 60 秒）..."
+          for i in $(seq 1 12); do
+            if docker-compose exec -T web curl -sf http://localhost:5000/health; then
+              echo ""
+              echo "✅ 健康检查通过！"
+              exit 0
+            fi
+            echo "尝试 $i/12: 服务尚未就绪，等待 5 秒..."
+            sleep 5
+          done
+          echo "❌ 健康检查超时"
+          docker-compose logs
+          exit 1
+
+      - name: Show deployment logs
+        run: |
+          echo "=========================================="
+          echo "  部署日志 - web 服务"
+          echo "=========================================="
+          docker-compose logs web
+          echo ""
+          echo "=========================================="
+          echo "  容器运行状态"
+          echo "=========================================="
+          docker-compose ps
+
+      - name: Verify application endpoints
+        run: |
+          echo "=========================================="
+          echo "  验证应用端点"
+          echo "=========================================="
+          echo "--- /health ---"
+          docker-compose exec -T web curl -s http://localhost:5000/health
+          echo ""
+          echo "--- /metrics (前 20 行) ---"
+          docker-compose exec -T web curl -s http://localhost:5000/metrics | head -20
+          echo ""
+          echo "✅ 所有端点验证通过"
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose down -v

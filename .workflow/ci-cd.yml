@@ -1,0 +1,84 @@
+# Gitee Go 流水线配置 - DevOps ATM 自助银行系统
+# 文件位置: .workflow/ci-cd.yml
+# 触发: master / develop 分支推送 与 master 的 Pull Request
+
+version: '1.0'
+name: atm-ci-cd
+displayName: ATM 系统 CI/CD 流水线
+
+triggers:
+  push:
+    branches:
+      precise:
+        - master
+        - develop
+  pr:
+    branches:
+      precise:
+        - master
+
+stages:
+  # ========== 阶段一：测试（CI）==========
+  - stage: test
+    displayName: 自动化测试
+    strategy: naturally
+    trigger: auto
+    steps:
+      - step: build@python
+        name: unit_test
+        displayName: pytest 单元测试 + 覆盖率
+        pythonVersion: 3.9
+        commands:
+          - pip install --upgrade pip
+          - pip install -r requirements.txt
+          - pytest tests/ --cov=. --cov-report=xml --cov-report=term-missing
+        artifacts:
+          - name: COVERAGE_REPORT
+            path:
+              - ./coverage.xml
+
+      - step: build@python
+        name: lint_check
+        displayName: flake8 静态代码检查
+        pythonVersion: 3.9
+        commands:
+          - pip install flake8
+          - flake8 app.py config.py --max-line-length=120 --ignore=E226,E302,E305,E306,E401,E501,E701,E702,E704
+
+  # ========== 阶段二：Docker 镜像构建 ==========
+  - stage: build
+    displayName: Docker 镜像构建
+    strategy: naturally
+    trigger: auto
+    steps:
+      - step: build@docker
+        name: docker_build
+        displayName: 构建 ATM 应用镜像
+        dockerfile: ./Dockerfile
+        imageName: devops-atm
+        imageTag: ${GITEE_COMMIT}
+        artifacts:
+          - name: DOCKER_IMAGE
+            path:
+              - ./Dockerfile
+
+  # ========== 阶段三：生产部署（CD）==========
+  # 仅 master 分支触发，需在 Gitee Go 中配置主机组与部署脚本
+  - stage: deploy
+    displayName: 生产部署
+    strategy: naturally
+    trigger: manual
+    steps:
+      - step: deploy@host
+        name: deploy_production
+        displayName: 部署到生产主机
+        hostGroup: production
+        dependArtifact: DOCKER_IMAGE
+        script: |
+          # 拉取最新镜像并重启服务
+          cd /opt/atm
+          docker-compose pull
+          docker-compose up -d
+          # 健康检查
+          sleep 10
+          curl -f http://localhost/health || exit 1
