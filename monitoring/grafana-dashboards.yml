@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: ATM Dashboards
+    orgId: 1
+    folder: ATM
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

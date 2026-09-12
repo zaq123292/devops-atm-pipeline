@@ -1,0 +1,66 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "title": "HTTP 请求 QPS",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(flask_http_request_total[1m])",
+          "legendFormat": "{{ method }} {{ status }}"
+        }
+      ]
+    },
+    {
+      "title": "请求耗时 P95",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "P95"
+        }
+      ]
+    },
+    {
+      "title": "服务存活状态",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "up{job=\"atm\"}", "legendFormat": "ATM 服务" }
+      ]
+    },
+    {
+      "title": "活跃请求数",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 8 },
+      "targets": [
+        { "expr": "flask_http_request_in_progress", "legendFormat": "进行中" }
+      ]
+    },
+    {
+      "title": "进程内存使用 (MB)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes / 1024 / 1024",
+          "legendFormat": "内存"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["atm"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "ATM 系统监控面板",
+  "uid": "atm-dashboard",
+  "version": 1
+}
