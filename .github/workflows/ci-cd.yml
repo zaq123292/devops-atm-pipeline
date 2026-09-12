@@ -60,11 +60,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
-
       - name: Configure environment
         run: |
           echo "DB_PASSWORD=ci_deploy_password" > .env
@@ -77,24 +72,24 @@ jobs:
           echo "=========================================="
           echo "  CD 自动部署 - 启动生产服务"
           echo "=========================================="
-          docker-compose up -d --build
+          docker compose up -d --build
           echo ""
           echo "服务启动完成，等待健康检查..."
 
       - name: Wait for health check
         run: |
-          echo "等待服务就绪（最多 60 秒）..."
-          for i in $(seq 1 12); do
-            if docker-compose exec -T web curl -sf http://localhost:5000/health; then
+          echo "等待服务就绪（最多 90 秒）..."
+          for i in $(seq 1 18); do
+            if docker compose exec -T web curl -sf http://localhost:5000/health; then
               echo ""
-              echo "✅ 健康检查通过！"
+              echo "健康检查通过！"
               exit 0
             fi
-            echo "尝试 $i/12: 服务尚未就绪，等待 5 秒..."
+            echo "尝试 $i/18: 服务尚未就绪，等待 5 秒..."
             sleep 5
           done
-          echo "❌ 健康检查超时"
-          docker-compose logs
+          echo "健康检查超时"
+          docker compose logs
           exit 1
 
       - name: Show deployment logs
@@ -102,12 +97,12 @@ jobs:
           echo "=========================================="
           echo "  部署日志 - web 服务"
           echo "=========================================="
-          docker-compose logs web
+          docker compose logs web
           echo ""
           echo "=========================================="
           echo "  容器运行状态"
           echo "=========================================="
-          docker-compose ps
+          docker compose ps
 
       - name: Verify application endpoints
         run: |
@@ -115,13 +110,13 @@ jobs:
           echo "  验证应用端点"
           echo "=========================================="
           echo "--- /health ---"
-          docker-compose exec -T web curl -s http://localhost:5000/health
+          docker compose exec -T web curl -s http://localhost:5000/health
           echo ""
           echo "--- /metrics (前 20 行) ---"
-          docker-compose exec -T web curl -s http://localhost:5000/metrics | head -20
+          docker compose exec -T web curl -s http://localhost:5000/metrics | head -20
           echo ""
-          echo "✅ 所有端点验证通过"
+          echo "所有端点验证通过"
 
       - name: Cleanup
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v

@@ -40,7 +40,7 @@ git push github master
 - **Actions 列表页**：显示工作流状态为绿色 ✓（成功）
 - **test Job 日志**：显示 `5 passed`、覆盖率报告、flake8 通过
 - **build Job 日志**：显示 Docker 镜像构建成功
-- **deploy Job 日志**（需在 Settings → Environments → production 中批准）：显示 docker-compose 部署、健康检查通过、`/health` 和 `/metrics` 验证
+- **deploy Job 日志**：显示 docker compose 部署、健康检查通过、`/health` 和 `/metrics` 验证
 
 ---
 
@@ -52,25 +52,25 @@ git push github master
 ```bash
 cp .env.example .env
 # 编辑 .env 设置 DB_PASSWORD
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### 查看部署日志
 ```bash
 # 查看所有服务日志
-docker-compose logs
+docker compose logs
 
 # 只看 web 服务日志
-docker-compose logs web
+docker compose logs web
 
 # 查看容器运行状态
-docker-compose ps
+docker compose ps
 ```
 
 ### 需截图的内容
-- `docker-compose up -d --build` 的终端输出（显示各服务构建和启动）
-- `docker-compose ps` 输出（所有服务状态为 running）
-- `docker-compose logs web` 输出（显示应用启动日志、数据库连接、健康检查日志）
+- `docker compose up -d --build` 的终端输出（显示各服务构建和启动）
+- `docker compose ps` 输出（所有服务状态为 running）
+- `docker compose logs web` 输出（显示应用启动日志、数据库连接、健康检查日志）
 
 ---
 
@@ -88,7 +88,7 @@ curl http://localhost/health
 ### 日志输出
 ```bash
 # 实时查看日志
-docker-compose logs -f web
+docker compose logs -f web
 ```
 日志包含：应用启动、用户登录、健康检查、数据库操作等
 
@@ -122,7 +122,7 @@ curl http://localhost:5000/metrics
 
 ### 前置条件
 - Docker Desktop 已启动
-- 已运行 `docker-compose up -d db` 启动数据库（回滚测试只重启 web 服务）
+- 已运行 `docker compose up -d db` 启动数据库（回滚测试只重启 web 服务）
 
 ### 执行回滚测试
 ```bash

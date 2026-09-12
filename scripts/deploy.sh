@@ -33,7 +33,7 @@ echo "✅ 镜像构建完成"
 # 2. 部署新版本
 echo ""
 echo "[2/5] 部署新版本 ${VERSION}..."
-IMAGE_TAG="${VERSION}" docker-compose up -d --no-deps web nginx
+IMAGE_TAG="${VERSION}" docker compose up -d --no-deps web nginx
 echo "✅ 新版本容器已启动"
 
 # 3. 等待服务就绪
@@ -66,7 +66,7 @@ else
     echo "============================================"
     if [ -n "${PREV_VERSION}" ]; then
         echo "回滚到版本: ${PREV_VERSION}"
-        IMAGE_TAG="${PREV_VERSION}" docker-compose up -d --no-deps web nginx
+        IMAGE_TAG="${PREV_VERSION}" docker compose up -d --no-deps web nginx
         # 验证回滚
         sleep 8
         if curl -sf http://localhost/health > /dev/null 2>&1; then
@@ -90,8 +90,8 @@ fi
 echo ""
 echo "[5/5] 部署日志（web 服务）"
 echo "--------------------------------------------"
-docker-compose logs --tail=20 web
+docker compose logs --tail=20 web
 echo "--------------------------------------------"
 echo ""
 echo "当前运行容器:"
-docker-compose ps
+docker compose ps

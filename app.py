@@ -43,7 +43,7 @@ def create_app(test_config=None):
                 import sqlite3
                 g.db = sqlite3.connect(app.config["DATABASE"])
                 g.db.row_factory = sqlite3.Row
-        return g.db() if is_pg else g.db
+        return g.db
 
     @app.teardown_appcontext
     def close_db(_error):

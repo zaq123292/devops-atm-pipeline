@@ -32,7 +32,7 @@ fi
 # 回滚
 echo ""
 echo "[1/3] 使用版本 ${ROLLBACK_VERSION} 重启服务..."
-IMAGE_TAG="${ROLLBACK_VERSION}" docker-compose up -d --no-deps web nginx
+IMAGE_TAG="${ROLLBACK_VERSION}" docker compose up -d --no-deps web nginx
 
 # 健康检查
 echo ""
@@ -45,7 +45,7 @@ if curl -sf http://localhost/health > /dev/null 2>&1; then
     echo "${ROLLBACK_VERSION}" > .current_version
 else
     echo "❌ 回滚后健康检查失败，请人工介入"
-    docker-compose logs web
+    docker compose logs web
     exit 1
 fi
 
