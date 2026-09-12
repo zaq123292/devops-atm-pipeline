@@ -1,0 +1,11 @@
+*.pyc
+__pycache__/
+*.db
+test_atm.db
+.env
+atm.log*
+
+# 部署与回滚产生的本地状态文件
+.current_version
+.version_history
+*.tar
