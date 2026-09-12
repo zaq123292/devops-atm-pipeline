@@ -74,7 +74,17 @@ jobs:
           echo "=========================================="
           docker compose up -d --build
           echo ""
-          echo "服务启动完成，等待健康检查..."
+          echo "服务启动命令已执行，等待 10 秒后查看状态..."
+          sleep 10
+          echo ""
+          echo "=== 容器状态 ==="
+          docker compose ps
+          echo ""
+          echo "=== web 容器日志 ==="
+          docker compose logs web || true
+          echo ""
+          echo "=== db 容器日志 ==="
+          docker compose logs db || true
 
       - name: Wait for health check
         run: |
@@ -89,7 +99,15 @@ jobs:
             sleep 5
           done
           echo "健康检查超时"
-          docker compose logs
+          echo ""
+          echo "=== 失败诊断：容器状态 ==="
+          docker compose ps
+          echo ""
+          echo "=== 失败诊断：web 容器日志 ==="
+          docker compose logs web || true
+          echo ""
+          echo "=== 失败诊断：db 容器日志 ==="
+          docker compose logs db || true
           exit 1
 
       - name: Show deployment logs
